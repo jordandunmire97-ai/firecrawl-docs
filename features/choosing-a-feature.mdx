@@ -1,0 +1,147 @@
+---
+title: "Choosing a Feature"
+description: "Decide which Firecrawl endpoint to use based on what you need to accomplish"
+og:title: "Choosing a Feature | Firecrawl"
+og:description: "A decision guide for picking the right Firecrawl endpoint"
+icon: "compass"
+---
+
+Firecrawl has several endpoints that overlap in capability. This guide explains what each one is for, when to reach for it, and when to choose something else instead.
+
+## Quick decision matrix
+
+| I want to… | Use |
+|------------|-----|
+| Get clean content from **one URL** I already know | [Scrape](/features/scrape) |
+| Get clean content from **many URLs** I already know | [Batch Scrape](/features/scrape#batch-scraping-multiple-urls) |
+| Discover and scrape **all pages on a site** recursively | [Crawl](/features/crawl) |
+| **Search the web** and optionally get full page content | [Search](/features/search) |
+| Just get a **list of URLs** on a site without scraping | [Map](/features/map) |
+| Scrape a page and then **click, fill forms, or navigate** within it | [Interact](/features/interact) |
+| Gather data from the web **without knowing the URLs** upfront | [Agent](/features/agent) |
+
+---
+
+## Scrape — one page, clean output
+
+Use **Scrape** when you have a specific URL and need its content. It returns markdown, HTML, structured JSON, screenshots, or other formats in a single synchronous call.
+
+**Choose Scrape when:**
+- You know the exact URL.
+- You need a synchronous response (no polling required).
+- You want to extract structured fields from a known product, article, or document page.
+
+**Don't use Scrape when:**
+- You need to visit more than a handful of URLs (use Batch Scrape or Crawl instead).
+- You don't know what URLs to target (use Agent or Search instead).
+
+---
+
+## Batch Scrape — many URLs, same options
+
+Batch Scrape runs the same scrape options across a list of URLs you supply. It is asynchronous and returns a job ID you poll for results, similar to Crawl.
+
+**Choose Batch Scrape when:**
+- You have a pre-built list of URLs (from a sitemap, a spreadsheet, a prior Map result, etc.).
+- You want consistent options applied to every URL.
+
+**Don't use Batch Scrape when:**
+- You need to discover the URLs first (use Map or Crawl to find them).
+
+---
+
+## Crawl — entire site, recursive discovery
+
+Crawl starts at a root URL, discovers all reachable subpages through link traversal and sitemaps, and scrapes each one. It is the right choice when you want to ingest an entire site or a section of it.
+
+**Choose Crawl when:**
+- You want every page under a domain or path prefix.
+- You don't know all the URLs in advance.
+- You want real-time results via WebSocket or webhook as pages are scraped.
+
+**Don't use Crawl when:**
+- You already have all the URLs (use Batch Scrape — it's faster with a fixed list).
+- You only need a URL list without content (use Map — it's much cheaper).
+- Your site is too large to crawl in full right now (set a lower `limit`).
+
+---
+
+## Map — URLs only, no content
+
+Map returns all the URLs on a site without scraping any of them. It's extremely fast and costs 1 credit per call, regardless of site size.
+
+**Choose Map when:**
+- You want to audit or explore a site's structure.
+- You need to decide which URLs to scrape before committing credits to scraping them.
+- You want to pipe URLs into a Batch Scrape or Crawl filtered by path.
+
+**Don't use Map when:**
+- You need page content — Map never fetches page bodies.
+
+---
+
+## Search — query the web, optionally scrape results
+
+Search takes a query string and returns titles, descriptions, and URLs from across the web. Add `scrapeOptions` to also retrieve full page content for each result in the same call.
+
+**Choose Search when:**
+- You are looking for pages on a topic rather than a known URL.
+- You want to combine discovery (finding relevant pages) and extraction (getting their content) in one call.
+- You need news, images, or academic papers by topic.
+
+**Don't use Search when:**
+- You already know the exact URLs — a direct Scrape or Batch Scrape is cheaper and faster.
+- You need to index an entire known site — Crawl is better suited.
+
+---
+
+## Interact — take actions inside a page
+
+Interact opens a persistent browser session on a page you've already loaded and lets you click, fill forms, navigate, or run code before extracting content. Describe your intent in plain English or write Playwright/agent-browser code for deterministic control.
+
+**Choose Interact when:**
+- You need to log in, click through pagination, or fill a form before the data is visible.
+- You want to drive a browser step-by-step across multiple turns.
+- You need a live embeddable view of what the browser is doing.
+
+**Don't use Interact when:**
+- The page renders everything on initial load — a plain Scrape is faster and cheaper.
+- You need bulk-page extraction — Crawl or Batch Scrape scales better.
+
+---
+
+## Agent — autonomous web research
+
+Agent accepts a plain-English prompt, then independently searches the web, navigates sites, and assembles structured data — without requiring any URLs up front. It is the highest-autonomy option.
+
+**Choose Agent when:**
+- You don't know which pages or sites contain the data you need.
+- The task requires multi-step navigation across many different domains.
+- You want structured output from a research-style query rather than a known URL.
+
+**Don't use Agent when:**
+- You already know the URLs — Batch Scrape or Crawl is faster and more predictable.
+- Cost predictability is critical — Agent credit usage scales with how many pages it visits.
+- You need a synchronous response — Agent is asynchronous.
+
+---
+
+## Common patterns
+
+### "I want every page on a site I own"
+→ **Crawl** the root URL with `sitemap: "include"` (default).
+
+### "I have a CSV of 500 product URLs I scraped elsewhere"
+→ **Batch Scrape** with the `product` format.
+
+### "I want the top 10 news articles about a topic, with their full text"
+→ **Search** with `sources: ["news"]`, `limit: 10`, and `scrapeOptions: { formats: ["markdown"] }`.
+
+### "I need to log into a dashboard and download a report"
+→ **Interact** using prompt mode or Playwright code.
+
+### "I want to find all URLs on a site, then only scrape the `/blog/` ones"
+→ **Map** to get all URLs, filter in your application code, then **Batch Scrape** the filtered list.
+
+### "I need competitive pricing data from across the web, and I don't know all the sources"
+→ **Agent** with a structured schema describing the fields you need.
