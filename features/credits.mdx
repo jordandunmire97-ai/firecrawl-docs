@@ -1,0 +1,75 @@
+---
+title: "Credits & Cost Reference"
+description: "A unified reference for how every Firecrawl operation consumes credits"
+og:title: "Credits & Cost Reference | Firecrawl"
+og:description: "One place to understand the credit cost of every Firecrawl operation"
+icon: "coins"
+---
+
+Every API call consumes credits from your plan balance. This page is the single authoritative reference for how many credits each operation costs. For plan-level credit allotments and pricing, see [Billing](/billing). For request-per-minute limits, see [Rate Limits](/rate-limits).
+
+## Credit cost summary
+
+| Operation | Base cost | Add-ons |
+|-----------|-----------|---------|
+| **Scrape** (`/scrape`) | 1 credit / page | See add-ons below |
+| **Batch Scrape** (`/batch/scrape`) | 1 credit / page | Same add-ons as Scrape |
+| **Crawl** (`/crawl`) | 1 credit / page crawled | Same add-ons as Scrape |
+| **Map** (`/map`) | 1 credit / call | — |
+| **Search** (`/search`) | 2 credits / 10 results (rounded up) | Scrape add-ons apply per result when `scrapeOptions` is set |
+| **Agent** (`/agent`) | Variable — billed per page visited | Same add-ons as Scrape |
+
+<Info>
+  Credit costs are deducted at request time, not on job completion. If a crawl is cancelled mid-run, credits for pages already processed are consumed.
+</Info>
+
+## Scrape add-ons
+
+These costs stack on top of the 1-credit base cost and apply any time the corresponding option is used — in a standalone scrape, within a crawl's `scrapeOptions`, in a batch scrape, or within a search's `scrapeOptions`.
+
+| Add-on | Additional credits |
+|--------|-------------------|
+| JSON extraction (`json` format) | +4 credits / page |
+| Enhanced proxy mode (`proxy: "enhanced"`) | +4 credits / page |
+| PII redaction (`redactPII: true`) | +4 credits / page |
+| Question format (`question`) | +4 credits / page |
+| Highlights format (`highlights`) | +4 credits / page |
+| Audio extraction (`audio` format) | +4 credits / page |
+| Video extraction (`video` format) | +4 credits / page |
+| PDF parsing (any PDF URL) | +1 credit / PDF page |
+| Zero Data Retention — ZDR (`zeroDataRetention: true`) | +1 credit / page |
+
+<Note>
+  Multiple add-ons stack. For example, a scrape with enhanced proxy **and** JSON extraction costs 1 + 4 + 4 = **9 credits per page**.
+</Note>
+
+## Search credit details
+
+Search charges 2 credits per 10 results, rounded up. A few things to note:
+
+- The `limit` parameter applies **per source type**. With `limit: 5` and `sources: ["web", "news"]`, you receive up to 10 total results and are charged for 10 results (2 credits).
+- When `scrapeOptions` are included, the standard scrape add-on costs above apply to **every result** that is scraped.
+- Zero Data Retention for search uses the `enterprise` parameter (not `zeroDataRetention`). End-to-end ZDR (`enterprise: ["zdr"]`) costs 10 credits / 10 results; anonymized ZDR (`enterprise: ["anon"]`) costs 2 credits / 10 results.
+
+## Crawl credit details
+
+Each page the crawler visits and scrapes costs 1 credit. The `limit` parameter caps how many pages are scraped. Before a crawl starts, Firecrawl checks that your remaining credits cover the full `limit` — if not, it returns a `402` error. Set `limit` to match your intended crawl size.
+
+## Cached results
+
+Cached results still cost 1 credit per page. Caching speeds up responses but does not reduce credit usage. To skip the cache and force a fresh scrape, set `maxAge: 0`.
+
+## Estimating costs before you run
+
+1. Start from the base cost for your operation.
+2. Add credits for each add-on you'll use.
+3. Multiply by the number of pages or results.
+
+**Example — crawl 500 pages with enhanced proxy and JSON extraction:**
+- 1 (base) + 4 (enhanced proxy) + 4 (JSON) = 9 credits/page
+- 500 pages × 9 = **4,500 credits**
+
+**Example — search for 20 results and scrape each one:**
+- Search: 4 credits (20 results = 2 × 2 credits)
+- Scrape of each result (basic): 20 × 1 = 20 credits
+- **Total: 24 credits**

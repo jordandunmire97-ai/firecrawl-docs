@@ -41,6 +41,22 @@ Crawl submits a URL to Firecrawl and recursively discovers and scrapes every rea
 
 <PlaygroundCTA />
 
+## How crawling works
+
+Understanding the crawl pipeline helps you configure it correctly and interpret unexpected behavior.
+
+1. **URL queue initialization** — Firecrawl starts by fetching the root URL's sitemap (when `sitemap: "include"`, the default). Sitemapped URLs are added to the queue at discovery depth 0 alongside the root URL itself. This ensures deep-linked pages that aren't reachable through the HTML link graph are still found.
+
+2. **Concurrent browser scraping** — Pages are scraped in parallel up to your plan's concurrent browser limit (see [Rate Limits](/rate-limits)). Each page goes through the same JavaScript-rendering pipeline as a regular `/scrape` call. Because pages finish in non-deterministic order, the sequence of results can vary between runs.
+
+3. **Link extraction and depth tracking** — After each page is scraped, its outbound links are extracted. Each discovered link is assigned a discovery depth one higher than the page it was found on. Links are only followed if they haven't been visited yet and are within the configured `maxDiscoveryDepth`, path filters, and domain scope.
+
+4. **Result delivery** — Completed pages are delivered via the polling endpoint, WebSocket events (`crawl.page`), or webhook callbacks as they finish — not after the full crawl completes. This means you can start processing data while the crawl is still running.
+
+5. **Termination** — The crawl ends when the queue is empty or the `limit` is reached, whichever comes first. A `crawl.completed` event or a `status: "completed"` polling response signals the end.
+
+**Key implication:** Because sitemapped pages start at depth 0, setting a `maxDiscoveryDepth` of 0 still scrapes every sitemapped page — it only prevents following links found in the page HTML. Set `sitemap: "skip"` if you want depth to control everything.
+
 ## Installation
 
 <CodeGroup>
@@ -65,8 +81,12 @@ Submit a crawl job by calling `POST /v2/crawl` with a starting URL. The endpoint
 </CodeGroup>
 
 <Info>
-  Each page crawled consumes 1 credit. The default crawl `limit` is 10,000 pages. Before starting, the crawl endpoint checks that your remaining credits can cover the `limit` — if not, it returns a **402 (Payment Required)** error. Set a lower `limit` to match your intended crawl size (e.g. `limit: 100`) to avoid this. Additional credits apply for certain options: JSON mode costs 4 additional credits per page, enhanced proxy costs 4 additional credits per page, and PDF parsing costs 1 credit per PDF page.
+  Each page crawled consumes 1 credit. The default crawl `limit` is 10,000 pages. Before starting, the crawl endpoint checks that your remaining credits can cover the `limit` — if not, it returns a **402 (Payment Required)** error. Set a lower `limit` to match your intended crawl size (e.g. `limit: 100`) to avoid this. Additional credits apply for certain options: JSON mode costs 4 additional credits per page, enhanced proxy costs 4 additional credits per page, and PDF parsing costs 1 credit per PDF page. See the [Credits & Cost Reference](/features/credits) for the full breakdown.
 </Info>
+
+<Note>
+  The number of crawl submissions per minute and concurrent browser sessions are both capped by your plan. If all browsers are busy, new crawl pages queue until one frees up. To control how many pages run in parallel within a single crawl, set `maxConcurrency` (capped at your plan's limit). See [Rate Limits](/rate-limits) for per-plan numbers.
+</Note>
 
 ### Scrape options
 
@@ -266,6 +286,61 @@ The full set of parameters available when submitting a crawl job:
 | `scrapeOptions` | `object` | (none) | Options applied to every scraped page (formats, proxy, caching, actions, etc.) |
 | `webhook` | `object` | (none) | Webhook configuration for real-time notifications |
 | `prompt` | `string` | (none) | Natural language prompt to generate crawl options. Explicitly set parameters override generated equivalents. |
+
+## Error handling and failure recovery
+
+Crawl jobs can encounter two distinct categories of failure. Understanding the difference helps you handle them correctly.
+
+### Job-level failures
+
+These prevent the crawl from starting or cause it to abort entirely.
+
+| Error | Likely cause | What to do |
+|-------|-------------|------------|
+| `402 Payment Required` | Your remaining credits are less than the `limit` | Lower `limit` to match your credit balance, or add credits |
+| `429 Too Many Requests` | Crawl submission rate limit exceeded | Retry with exponential backoff |
+| `400 Bad Request` | Invalid parameters (e.g. malformed URL, conflicting options) | Check the error message for the specific field that failed validation |
+
+### Page-level failures
+
+These appear in the crawl errors endpoint (`GET /v2/crawl/{id}/errors`) rather than in the `data` array. The `data` array only contains pages Firecrawl *successfully* scraped — even if the target returned a `404`. Pages Firecrawl itself could not retrieve appear only in the errors endpoint.
+
+| Failure type | What it means | How to address |
+|--------------|---------------|----------------|
+| **Network error** | The target server was unreachable or dropped the connection | Retry the specific URL with a `scrape` call, or re-run the crawl with `delay` set to reduce request rate |
+| **Timeout** | The page took longer than the configured timeout to render | Increase `timeout` in `scrapeOptions`, or use `proxy: "enhanced"` if the page requires more rendering time |
+| **robots.txt block** | The site's robots.txt disallows the Firecrawl crawler | Respect the robots.txt, or contact support to enable `ignoreRobotsTxt` on Enterprise plans |
+| **HTTP error (e.g. 404, 403, 500)** | The target page returned an error code | Check `metadata.statusCode` in the `data` array — these pages are included because Firecrawl scraped them successfully; the target site returned the error |
+
+### Retrieving failed pages
+
+```bash cURL
+curl -X GET https://api.firecrawl.dev/v2/crawl/{id}/errors \
+  -H "Authorization: ******"
+```
+
+The response lists each failed URL, its error type, and an error message. You can then selectively retry those URLs with a `/scrape` call.
+
+### Retry strategy
+
+For transient failures (network errors, timeouts), a simple retry loop works well:
+
+```python Python
+from firecrawl import Firecrawl
+import time
+
+firecrawl = Firecrawl(api_key="fc-YOUR_API_KEY")
+
+def scrape_with_retry(url, max_retries=3, delay=2):
+    for attempt in range(max_retries):
+        try:
+            return firecrawl.scrape(url, formats=["markdown"])
+        except Exception as e:
+            if attempt < max_retries - 1:
+                time.sleep(delay * (2 ** attempt))  # exponential backoff
+            else:
+                raise
+```
 
 ## Important details
 

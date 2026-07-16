@@ -165,7 +165,8 @@
                           "features/lockdown",
                           "features/pii-redaction",
                           "features/proxies",
-                          "features/document-parsing"
+                          "features/document-parsing",
+                          "features/credits"
                         ]
                       },
                       "features/interact"
@@ -267,7 +268,8 @@
                         "group": "Usage Guides",
                         "icon": "compass",
                         "pages": [
-                          "developer-guides/usage-guides/choosing-the-data-extractor"
+                          "developer-guides/usage-guides/choosing-the-data-extractor",
+                          "features/choosing-a-feature"
                         ]
                       },
                       {
