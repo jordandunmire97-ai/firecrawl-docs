@@ -1,0 +1,35 @@
+---
+title: Docs Lifecycle Policy
+description: "Lifecycle states and governance rules for active, legacy, deprecated, and hidden docs pages."
+og:title: "Docs Lifecycle Policy | Firecrawl"
+og:description: "Governance rules for page lifecycle states, hidden pages, and deprecation handling."
+---
+
+This policy defines how documentation pages move through lifecycle states.
+
+## Lifecycle states
+
+- **Active**: Current and recommended documentation.
+- **Legacy**: Kept for compatibility context; not recommended for new builds.
+- **Deprecated**: Scheduled for retirement with a documented replacement path.
+- **Hidden**: Not shown in primary navigation; must have explicit ownership and reason.
+
+## Required metadata and behavior
+
+- Deprecated and hidden pages should include migration guidance to an active page.
+- Hidden pages should use `hidden: true` and `noindex: true` when applicable.
+- Deprecated pages should be listed in [Deprecation Index](/contributing/deprecations).
+
+## Hidden-page governance
+
+For each hidden page, maintain:
+
+1. Business reason for hidden status
+2. Owning team/person
+3. Planned review date
+4. Removal or reactivation decision
+
+## Review cadence
+
+- Review hidden and deprecated pages on a regular cadence (recommended monthly or per release cycle).
+- Remove pages with no support need and no meaningful inbound traffic.

@@ -1,0 +1,49 @@
+---
+title: Docs Style Guide
+description: "Source-of-truth standards for writing and structuring Firecrawl documentation."
+og:title: "Docs Style Guide | Firecrawl"
+og:description: "Standards for voice, structure, examples, warnings, and deprecation notes in Firecrawl docs."
+---
+
+This page defines the source-of-truth writing and structure standards for source documentation.
+
+## Voice and clarity
+
+- Use direct, task-oriented language.
+- Prefer concrete outcomes over abstract feature descriptions.
+- Keep one primary objective per section.
+
+## Page structure
+
+Each page should follow this order where applicable:
+
+1. Problem/outcome statement
+2. Prerequisites and constraints
+3. Primary implementation path
+4. Validation or expected output
+5. Troubleshooting and edge cases
+
+## Code examples
+
+- Keep examples runnable and minimal.
+- Include one canonical example before variants.
+- Keep endpoint names, auth headers, and payload fields consistent with API Reference.
+
+## Notes, warnings, and deprecations
+
+- Use **Note** for contextual guidance.
+- Use **Warning** for behavior that can break integrations.
+- Use explicit deprecation language with a replacement link and migration deadline (when known).
+
+## Frontmatter standards
+
+- `title`: clear and specific.
+- `description`: one-sentence summary of user outcome.
+- `og:title` and `og:description`: mirror page intent.
+- Add `sidebarTitle` when navigation brevity improves readability.
+
+## Canonicalization rules
+
+- One canonical page per concept.
+- Secondary pages should link to the canonical page instead of duplicating long explanations.
+- Keep onboarding paths explicit between Introduction, Build with AI, and MCP Server pages.

@@ -121,9 +121,8 @@
                     "group": "Get Started",
                     "pages": [
                       "introduction",
+                      "start-here-by-role",
                       "sdks/cli",
-                      "ai-onboarding",
-                      "mcp-server",
                       "advanced-scraping-guide",
                       {
                         "group": "Plans and Billing",
@@ -371,7 +370,11 @@
                     "pages": [
                       "contributing/open-source-or-cloud",
                       "contributing/guide",
-                      "contributing/self-host"
+                      "contributing/self-host",
+                      "contributing/docs-style-guide",
+                      "contributing/docs-qa-checklist",
+                      "contributing/docs-lifecycle",
+                      "contributing/deprecations"
                     ]
                   }
                 ],
