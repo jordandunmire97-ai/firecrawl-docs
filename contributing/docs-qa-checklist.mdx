@@ -1,0 +1,31 @@
+---
+title: Docs QA Checklist
+description: "Contributor QA checklist for documentation updates and pull requests."
+og:title: "Docs QA Checklist | Firecrawl"
+og:description: "PR checklist for links, snippets, frontmatter quality, duplication, and content freshness."
+---
+
+Use this checklist for documentation pull requests.
+
+## PR quality checklist
+
+- [ ] All internal links resolve to valid routes.
+- [ ] External links are current and relevant.
+- [ ] Code snippets and commands match current APIs/SDKs.
+- [ ] Frontmatter (`title`, `description`, OG fields) is complete and accurate.
+- [ ] No duplicate conceptual explanations across multiple pages.
+- [ ] Deprecated guidance links to the active replacement page.
+- [ ] Screenshots and visual references are still accurate.
+
+## Hidden/deprecated governance checks
+
+- [ ] New hidden pages include explicit rationale and ownership.
+- [ ] `hidden: true` and `noindex: true` are intentional and reviewed.
+- [ ] Deprecated pages are added to [Deprecation Index](/contributing/deprecations).
+
+## Suggested doc health KPIs
+
+- Onboarding path completion by entry page.
+- Top page exits from onboarding pages.
+- Search refinement rate for key product terms.
+- Stale-page review completion rate per cycle.
